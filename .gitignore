@@ -3,7 +3,6 @@ Unity/Assets/Plugins
 Unity/Assets/Plugins.meta
 MakePackage.log
 *.unitypackage
-ProjectSettings/
 *.sln
 
 # streaming assets are massive, dont commit them
