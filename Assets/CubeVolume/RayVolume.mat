@@ -156,7 +156,7 @@ Material:
       data:
         first:
           name: SphereY
-        second: -0
+        second: 0
       data:
         first:
           name: SphereZ
@@ -164,19 +164,19 @@ Material:
       data:
         first:
           name: SphereRad
-        second: .175999999
+        second: .340000004
       data:
         first:
           name: CloudVoxelSize
-        second: .00999999978
+        second: .0199999996
       data:
         first:
           name: CloudMaxDepth
-        second: 96
+        second: 400
       data:
         first:
           name: DepthToWorld
-        second: .0450000018
+        second: .00600000005
       data:
         first:
           name: DepthRangeCamera

@@ -17,9 +17,9 @@
 	}
 	SubShader
 	{
-		Tags { "RenderType"="Opaque" }
+		Tags { "RenderType"="Transparent" }
 		LOD 100
-		Cull back
+		Cull off
 
 		Pass
 		{
@@ -42,6 +42,11 @@
 				float4 vertexlocal : TEXCOORD1;
 			};
 			
+			#define DRAW_EQUIRECT	false
+			#define DRAW_NORMAL		false
+			#define DRAW_DOTFORWARD	false
+			#define DRAW_DOTUP		false
+			#define DRAW_AS_SPHERE	0.3f
 
 			//	scene
 			sampler2D _MainTex;
@@ -266,9 +271,10 @@
 				
 				//return float4( EquirectUv.x, EquirectUv.y, 0, 1 );
 				float3 CloudColour = tex2D( _MainTex, EquirectUv );	
-				//CloudColour = float3( EquirectUv.x, EquirectUv.y, 0 );
-				//CloudColour = Debug_Normal( CloudColour ).xyz;
-				//CloudColour.xyz = dot( VolumeView3, float3(1,0,1) );
+				if ( DRAW_EQUIRECT )	CloudColour = float3( EquirectUv.x, EquirectUv.y, 0 );
+				if ( DRAW_NORMAL )		CloudColour = Debug_Normal( CloudColour ).xyz;
+				if ( DRAW_DOTFORWARD )	CloudColour = dot( VolumeView3, float3(0,0,1) );
+				if ( DRAW_DOTUP )		CloudColour = dot( VolumeView3, float3(0,1,0) );
 				//	gr: why do all view vectors point down?
 				//CloudColour.xyz = dot( VolumeView3, float3(0,-1,0) );
 				
@@ -278,12 +284,17 @@
 					CloudColour = float3(1,1,0);
 	
 				float CloudDepth = GetDepth( EquirectUv );
-				CloudDepth = 10;
+				
+				
 				
 				if ( CloudDepth > CloudMaxDepth )
 					return float4(0,0,0,9999);
 				
 				CloudDepth *= DepthToWorld;
+				
+				#if defined(DRAW_AS_SPHERE)
+					CloudDepth = DRAW_AS_SPHERE;
+				#endif
 				
 				float3 CloudPos = CloudCenter + VolumeView3*CloudDepth;
 				float4 CloudSphere = float4( CloudPos, CloudVoxelSize );
@@ -304,8 +315,8 @@
 			float4 frag (v2f i) : COLOR
 			{
 				//	get ray inside us
-				//float3 RayDirection = normalize(WorldSpaceViewDir( i.vertexlocal ));
-				float3 RayDirection = normalize(ObjSpaceViewDir( i.vertexlocal ));
+				float3 RayDirection = normalize(WorldSpaceViewDir( i.vertexlocal ));
+				//float3 RayDirection = normalize(ObjSpaceViewDir( i.vertexlocal ));
 				float3 RayPosition = i.vertexlocal;
 				//	we want ray AWAY from the camera
 				RayDirection *= -1;
@@ -346,7 +357,7 @@
 				//	brighter = nearer
 				d = 1-d;
 				//return float4(d,d,d,1);
-				return float4(rgb.x,rgb.y,rgb.z,1);
+				return float4(rgb.x,rgb.y,rgb.z,0.5f);
 			}
 			ENDCG
 		}
