@@ -144,11 +144,11 @@ Material:
       data:
         first:
           name: DepthRangeRed
-        second: 27
+        second: 100
       data:
         first:
           name: DepthRangeGreen
-        second: 100
+        second: 255
       data:
         first:
           name: SphereX
@@ -156,7 +156,7 @@ Material:
       data:
         first:
           name: SphereY
-        second: 0
+        second: -0
       data:
         first:
           name: SphereZ
@@ -168,15 +168,15 @@ Material:
       data:
         first:
           name: CloudVoxelSize
-        second: .0599999987
+        second: .00999999978
       data:
         first:
           name: CloudMaxDepth
-        second: 100
+        second: 96
       data:
         first:
           name: DepthToWorld
-        second: .0390000008
+        second: .0450000018
       data:
         first:
           name: DepthRangeCamera

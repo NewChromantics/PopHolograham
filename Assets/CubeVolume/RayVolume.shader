@@ -12,14 +12,14 @@
 		SphereZ("SphereZ",Range(-2,2)) = 0
 		SphereRad("SphereRad",Range(0,1)) = 0.1
 		CloudVoxelSize("CloudVoxelSize", Range(0,1) ) = 0.01
-		CloudMaxDepth("CloudMaxDepth", Range(0,100) ) = 1		//	in world space
+		CloudMaxDepth("CloudMaxDepth", Range(0,400) ) = 1		//	in world space
 		DepthToWorld("DepthToWorld", Range(0,0.1) ) = 0.1		//	actually depth to local
 	}
 	SubShader
 	{
 		Tags { "RenderType"="Opaque" }
 		LOD 100
-		Cull off
+		Cull back
 
 		Pass
 		{
@@ -146,10 +146,13 @@
 				float xz = sqrt( (x*x) + (z*z) );
 				float normy = y / sqrt( (y*y) + (xz*xz) );
 				float lon = sin( normy );
-				//$lon = atan2( $y, $xz );
+				//float lon = atan2( y, xz );
 				
 				//	stretch longitude...
-				lon *= 2.0;
+				//	gr: removed this as UV was wrapping around
+				//lon *= 2.0;
+				//	gr: sin output is -1 to 1...
+				lon *= PIf;
 				
 				return float2( lat, lon );
 			}
@@ -158,6 +161,7 @@
 				//	-pi...pi -> -1...1
 				float lat = LatLon.x;
 				float lon = LatLon.y;
+				
 				lat /= PIf;
 				lon /= PIf;
 				
@@ -168,8 +172,7 @@
 				//	0..2 -> 0..1
 				lat /= 2.0;
 				lon /= 2.0;
-				
-				lon = 1.0 - lon;
+								
 				lat *= Width;
 				lon *= Height;
 				
@@ -180,7 +183,6 @@
 			{
 				float2 latlon = ViewToLatLon( ViewDir );
 				latlon = LatLonToUv( latlon, 1, 1 );
-				latlon.y = 1-latlon.y;
 				return latlon;
 			}
 				
@@ -253,26 +255,36 @@
 			{
 				//	need to work out the ray from the center of the 360 to the cloud point
 				float3 CloudCenter = float3(SphereX,SphereY,SphereZ);
-				float3 VolumeView3 = normalize(VolumePos-CloudCenter);
-				//	convert view to equirect position to get the ray from the 360
+				float3 VolumeView3 = VolumePos-CloudCenter;
+				//if ( length( VolumeView3.xyz ) < 0.1 )
+				//	return float4(0,0,0,9999);
+				VolumeView3 = normalize(VolumeView3);
 				
-				//float2 EquirectUv = ViewToLatLon( CameraView.zyx );
+				//	convert view to equirect position to get the ray from the 360
 				float2 EquirectUv = ViewToUv( VolumeView3.xyz );
-							
+				//if ( EquirectUv.x < 0.5f )	return float4(0,0,0,9999);
 				
 				//return float4( EquirectUv.x, EquirectUv.y, 0, 1 );
 				float3 CloudColour = tex2D( _MainTex, EquirectUv );	
-				//CloudColour = float3( EquirectUv.x, EquirectUv.y, 0 );
+				CloudColour = float3( EquirectUv.x, EquirectUv.y, 0 );
+				//CloudColour = Debug_Normal( CloudColour ).xyz;
+				//CloudColour.xyz = dot( VolumeView3, float3(1,0,1) );
+				//	gr: why do all view vectors point down?
+				//CloudColour.xyz = dot( VolumeView3, float3(0,-1,0) );
 				
-				if ( EquirectUv.x < 0 || EquirectUv.x > 1 )
+				if ( EquirectUv.x < 0 || EquirectUv.x > 1.0f )
 					CloudColour = float3(0,1,1);
+				if ( EquirectUv.y < 0 || EquirectUv.y > 1.0f )
+					CloudColour = float3(1,1,0);
 	
 				float CloudDepth = GetDepth( EquirectUv );
+				CloudDepth = 10;
 				
 				if ( CloudDepth > CloudMaxDepth )
 					return float4(0,0,0,9999);
 				
 				CloudDepth *= DepthToWorld;
+				
 				float3 CloudPos = CloudCenter + VolumeView3*CloudDepth;
 				float4 CloudSphere = float4( CloudPos, CloudVoxelSize );
 				float Dist = sdSphere( VolumePos - CloudSphere.xyz, CloudSphere.w );
@@ -292,34 +304,48 @@
 			float4 frag (v2f i) : COLOR
 			{
 				//	get ray inside us
-				float3 RayDirection = normalize(WorldSpaceViewDir( i.vertexlocal ));
-				//float3 RayDirection = normalize(ObjSpaceViewDir( i.vertexlocal ));
+				//float3 RayDirection = normalize(WorldSpaceViewDir( i.vertexlocal ));
+				float3 RayDirection = normalize(ObjSpaceViewDir( i.vertexlocal ));
 				float3 RayPosition = i.vertexlocal;
+				//	we want ray AWAY from the camera
+				RayDirection *= -1;
 			
+			//#error 1) Equirect is wrapping
+			//#error 2) distance returned in GetColourDistance is closer, the further away it is (break proves this)
 				
-				float d = 999;
+				float d = 99;
 				float3 rgb = float3(1,0,0);;
 				//	ray march
 				
 				#define MARCHES 100
-				RayDirection *= 1.0f/MARCHES;
-				for ( int i=0;	i<MARCHES;	i++ )
+				#define DEBUG_MAX_LOOP MARCHES
+				for ( int i=0;	i<min(DEBUG_MAX_LOOP,MARCHES);	i++ )
 				{
-					float3 Pos = RayPosition + (RayDirection*i);
+					float RayLocalDepth = i/(float)MARCHES;
+					float3 Pos = RayPosition + (RayDirection*RayLocalDepth);
 					
 					float4 RayColourDist = GetColourDistance( Pos );
-					if ( RayColourDist.w > d )
+					
+					//	further than current best
+					if ( RayColourDist.w >= d )
 						continue;
 					
 					//	gr: lerp colour? mult if we go back to front for alphas
 					d = RayColourDist.w;
+					//d = RayLocalDepth;
 					rgb = RayColourDist.xyz;
 					
+					//	return first result. should be closest
+					//	gr: ^^^ true, but susbsequent ones are "nearer" (have smaller depth)
+					break;
 				}
 				
 				if ( d > 1 )
 					discard;
+				
+				//	brighter = nearer
 				d = 1-d;
+				//return float4(d,d,d,1);
 				return float4(rgb.x,rgb.y,rgb.z,1);
 			}
 			ENDCG
