@@ -19,7 +19,7 @@ Material:
         first:
           name: _MainTex
         second:
-          m_Texture: {fileID: 2800000, guid: a195e44444905463ab3e23af19c9a6f1, type: 3}
+          m_Texture: {fileID: 2800000, guid: ae3fc8df722d340b3b4c8e5d8f869be6, type: 3}
           m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
       data:
@@ -168,11 +168,11 @@ Material:
       data:
         first:
           name: CloudVoxelSize
-        second: .0199999996
+        second: .00300000003
       data:
         first:
           name: CloudMaxDepth
-        second: 400
+        second: 187
       data:
         first:
           name: DepthToWorld

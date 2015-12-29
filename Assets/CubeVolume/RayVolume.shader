@@ -11,7 +11,7 @@
 		SphereY("SphereY",Range(-2,2)) = 0
 		SphereZ("SphereZ",Range(-2,2)) = 0
 		SphereRad("SphereRad",Range(0,1)) = 0.1
-		CloudVoxelSize("CloudVoxelSize", Range(0,1) ) = 0.01
+		CloudVoxelSize("CloudVoxelSize", Range(0,0.1) ) = 0.01
 		CloudMaxDepth("CloudMaxDepth", Range(0,400) ) = 1		//	in world space
 		DepthToWorld("DepthToWorld", Range(0,0.1) ) = 0.1		//	actually depth to local
 	}
@@ -328,11 +328,18 @@
 				float3 rgb = float3(1,0,0);;
 				//	ray march
 				
-				#define MARCHES 100
-				#define DEBUG_MAX_LOOP MARCHES
-				for ( int i=0;	i<min(DEBUG_MAX_LOOP,MARCHES);	i++ )
+				#define LOCAL_RAY_FAR_DEPTH	1.4f	//	sqrt(1+1)
+				#define FORWARD_MARCHES 80
+				#define DEBUG_MAX_LOOP FORWARD_MARCHES
+				//	start BEHIND for when we're INSIDE the bounds (gr: this may only apply to the debug sphere)
+				#if defined(DRAW_AS_SPHERE)
+				#define BACKWARD_MARCHES	40
+				#else
+				#define BACKWARD_MARCHES	0
+				#endif
+				for ( int i=-BACKWARD_MARCHES;	i<min(DEBUG_MAX_LOOP,FORWARD_MARCHES);	i++ )
 				{
-					float RayLocalDepth = i/(float)MARCHES;
+					float RayLocalDepth = (i/(float)FORWARD_MARCHES) * LOCAL_RAY_FAR_DEPTH;
 					float3 Pos = RayPosition + (RayDirection*RayLocalDepth);
 					
 					float4 RayColourDist = GetColourDistance( Pos );
