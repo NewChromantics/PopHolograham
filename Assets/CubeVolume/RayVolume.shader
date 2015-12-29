@@ -140,7 +140,7 @@
 				float z = View3.z;
 	
 			//	auto lat = tan2( x, z );
-				float lat = atan( x/z );
+				float lat = atan2( x, z );
 				
 				//	normalise y
 				float xz = sqrt( (x*x) + (z*z) );
@@ -266,7 +266,7 @@
 				
 				//return float4( EquirectUv.x, EquirectUv.y, 0, 1 );
 				float3 CloudColour = tex2D( _MainTex, EquirectUv );	
-				CloudColour = float3( EquirectUv.x, EquirectUv.y, 0 );
+				//CloudColour = float3( EquirectUv.x, EquirectUv.y, 0 );
 				//CloudColour = Debug_Normal( CloudColour ).xyz;
 				//CloudColour.xyz = dot( VolumeView3, float3(1,0,1) );
 				//	gr: why do all view vectors point down?
