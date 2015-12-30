@@ -13,7 +13,11 @@
 		SphereRad("SphereRad",Range(0,1)) = 0.1
 		CloudVoxelSize("CloudVoxelSize", Range(0,0.1) ) = 0.01
 		CloudMaxDepth("CloudMaxDepth", Range(0,400) ) = 1		//	in world space
+		CloudMinDepth("CloudMinDepth", Range(-1,400) ) = 0		//	in world space
 		DepthToWorld("DepthToWorld", Range(0,0.1) ) = 0.1		//	actually depth to local
+		CameraFovHorz("CameraFovHorz", Range(0,360) ) = 360
+		CameraFovTop("CameraFovTop", Range(0,360) ) = 0
+		CameraFovBottom("CameraFovBottom", Range(0,360) ) = 360
 	}
 	SubShader
 	{
@@ -46,7 +50,10 @@
 			#define DRAW_NORMAL		false
 			#define DRAW_DOTFORWARD	false
 			#define DRAW_DOTUP		false
-			#define DRAW_AS_SPHERE	0.3f
+			//#define DRAW_AS_SPHERE	0.3f
+			#define DEBUG_CAMERA_NORMAL	false
+
+#define PIf	3.1415926535897932384626433832795f
 
 			//	scene
 			sampler2D _MainTex;
@@ -61,6 +68,9 @@
 			float DepthRangeGreen;
 			float DepthRangeBlue;
 			float DepthRangeCamera;
+			float CameraFovHorz;
+			float CameraFovTop;
+			float CameraFovBottom;
 	
 			float4x4 cameraToWorldMatrix;
 			float4 cameraPos;
@@ -73,8 +83,18 @@
 			float SphereRad;
 			float CloudVoxelSize;
 			float CloudMaxDepth;
+			float CloudMinDepth;
 			float DepthToWorld;
 
+			float RadToDeg(float Rad)
+			{
+				return Rad * (360.0f / (PIf * 2.0f) );
+			}
+			float DegToRad(float Deg)
+			{
+				return Deg * ((PIf * 2.0f)/360.0f );
+			}
+			 
 				
 			float GetDepth(float2 uv)
 			{
@@ -103,8 +123,6 @@
 				
 				return float3( los * lac, las, loc * lac );
 			}
-			#define M_PI 3.1415926535897932384626433832795f
-#define PIf	M_PI
 
 			float2 GetLatLong(float x,float y,float Width,float Height)
 			{
@@ -120,8 +138,8 @@
 				float yfract = (y) / Height;
 				yfract *= ymul;
 				
-				float lon = ( xfract - xsub) * M_PI;
-				float lat = ( yfract - ysub) * M_PI;
+				float lon = ( xfract - xsub) * PIf;
+				float lat = ( yfract - ysub) * PIf;
 				return float2( lat, lon );
 			}
 			
@@ -136,7 +154,29 @@
 				return GetEquirectView(uv) * GetDepth(uv);
 			}
 			
-			float2 ViewToLatLon(float3 View3)
+			float Range(float Min,float Max,float Time)
+			{
+				return (Time-Min) / (Max-Min);
+			}
+			
+			//	y = visible
+			float2 RescaleFov(float Radians,float MinDegrees,float MaxDegrees)
+			{
+				float Deg = RadToDeg( Radians );
+				Deg += 180;
+				
+				//	re-scale
+				Deg = Range( MinDegrees, MaxDegrees, Deg );
+				bool Visible = Deg >= 0 && Deg <= 1;
+				Deg *= 360;
+				
+				Deg -= 180;
+				Radians = DegToRad( Deg );
+				
+				return float2( Radians, Visible?1:0 );
+			}
+			
+			float3 ViewToLatLonVisible(float3 View3)
 			{
 				View3 = normalize(View3);
 				//	http://en.wikipedia.org/wiki/N-vector#Converting_n-vector_to_latitude.2Flongitude
@@ -159,8 +199,17 @@
 				//	gr: sin output is -1 to 1...
 				lon *= PIf;
 				
-				return float2( lat, lon );
+				bool Visible = true;
+				float2 NewLat = RescaleFov( lat, 0, CameraFovHorz );
+				float2 NewLon = RescaleFov( lon, CameraFovTop, CameraFovBottom );
+				lat = NewLat.x;
+				lon = NewLon.x;
+				Visible = (NewLat.y*NewLon.y) > 0;
+				
+	
+				return float3( lat, lon, Visible ? 1:0 );
 			}
+			
 			float2 LatLonToUv(float2 LatLon,float Width,float Height)
 			{
 				//	-pi...pi -> -1...1
@@ -183,12 +232,12 @@
 				
 				return float2( lat, lon );
 			}
-			//	3D view normal to equirect's UV
-			float2 ViewToUv(float3 ViewDir)
+			//	3D view normal to equirect's UV. Z is 0 if invalid
+			float3 ViewToUvVisible(float3 ViewDir)
 			{
-				float2 latlon = ViewToLatLon( ViewDir );
-				latlon = LatLonToUv( latlon, 1, 1 );
-				return latlon;
+				float3 latlonVisible = ViewToLatLonVisible( ViewDir );
+				latlonVisible.xy = LatLonToUv( latlonVisible.xy, 1, 1 );
+				return latlonVisible;
 			}
 				
 			float4 Debug_Normal(float3 Normal)
@@ -218,18 +267,13 @@
 				return (val-min) / (max-min);
 			}
 			
-			float RadToDeg(float Rad)
-			{
-				return Rad * (360.0f / (M_PI * 2.0f) );
-			 }
-			 
 			 //	http://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
 			 float sdSphere( float3 p, float s )
 			{
 				  return length(p)-s;
 			}
 
-			float4 GetColourDistance_TestSphere(float3 CloudPos)
+			float4 GetColourDistance_TestSphere(float3 CloudPos,float3 CameraPosVolume)
 			{
 				//	test sphere
 				float4 Sphere = float4(SphereX,SphereY,SphereZ,SphereRad);
@@ -256,7 +300,7 @@
 				return float4(Normal.x,Normal.y,Normal.z,Dist);
 			}
 			
-			float4 GetColourDistance_DepthMap(float3 VolumePos)
+			float4 GetColourDistance_DepthMap(float3 VolumePos,float3 CameraPosVolume)
 			{
 				//	need to work out the ray from the center of the 360 to the cloud point
 				float3 CloudCenter = float3(SphereX,SphereY,SphereZ);
@@ -266,7 +310,11 @@
 				VolumeView3 = normalize(VolumeView3);
 				
 				//	convert view to equirect position to get the ray from the 360
-				float2 EquirectUv = ViewToUv( VolumeView3.xyz );
+				float3 EquirectUvVisible = ViewToUvVisible( VolumeView3.xyz );
+				if ( EquirectUvVisible.z < 1 )
+					return float4(0,0,0,9999);
+					
+				float2 EquirectUv = EquirectUvVisible.xy;
 				//if ( EquirectUv.x < 0.5f )	return float4(0,0,0,9999);
 				
 				//return float4( EquirectUv.x, EquirectUv.y, 0, 1 );
@@ -286,7 +334,8 @@
 				float CloudDepth = GetDepth( EquirectUv );
 				
 				
-				
+				if ( CloudDepth < CloudMinDepth )
+					return float4(0,0,0,9999);
 				if ( CloudDepth > CloudMaxDepth )
 					return float4(0,0,0,9999);
 				
@@ -301,22 +350,25 @@
 				float Dist = sdSphere( VolumePos - CloudSphere.xyz, CloudSphere.w );
 				if (  Dist > CloudSphere.w )
 					return float4(0,0,0,9999);
+				Dist = length( CameraPosVolume - CloudSphere.xyz );
 				return float4( CloudColour, Dist );
 			}
 			
 			//	return colour(xyz) & distance(w) to the nearest point in the cloud world to CloudPos
-			float4 GetColourDistance(float3 VolumePos)
+			float4 GetColourDistance(float3 VolumePos,float3 CameraPosVolume)
 			{
-				return GetColourDistance_DepthMap( VolumePos );
-				return GetColourDistance_TestSphere( VolumePos );
+				return GetColourDistance_DepthMap( VolumePos, CameraPosVolume );
+				return GetColourDistance_TestSphere( VolumePos, CameraPosVolume );
 	
 			}
 
 			float4 frag (v2f i) : COLOR
 			{
 				//	get ray inside us
-				float3 RayDirection = normalize(WorldSpaceViewDir( i.vertexlocal ));
-				//float3 RayDirection = normalize(ObjSpaceViewDir( i.vertexlocal ));
+				float4 CameraPos4 = float4( _WorldSpaceCameraPos, 1 );
+				float3 CameraPosLocal = mul( _World2Object, CameraPos4 );
+				//float3 RayDirection = normalize(WorldSpaceViewDir( i.vertexlocal ));
+				float3 RayDirection = normalize(ObjSpaceViewDir( i.vertexlocal ));
 				float3 RayPosition = i.vertexlocal;
 				//	we want ray AWAY from the camera
 				RayDirection *= -1;
@@ -335,14 +387,14 @@
 				#if defined(DRAW_AS_SPHERE)
 				#define BACKWARD_MARCHES	40
 				#else
-				#define BACKWARD_MARCHES	0
+				#define BACKWARD_MARCHES	40
 				#endif
 				for ( int i=-BACKWARD_MARCHES;	i<min(DEBUG_MAX_LOOP,FORWARD_MARCHES);	i++ )
 				{
 					float RayLocalDepth = (i/(float)FORWARD_MARCHES) * LOCAL_RAY_FAR_DEPTH;
 					float3 Pos = RayPosition + (RayDirection*RayLocalDepth);
 					
-					float4 RayColourDist = GetColourDistance( Pos );
+					float4 RayColourDist = GetColourDistance( Pos, CameraPosLocal );
 					
 					//	further than current best
 					if ( RayColourDist.w >= d )
@@ -355,14 +407,19 @@
 					
 					//	return first result. should be closest
 					//	gr: ^^^ true, but susbsequent ones are "nearer" (have smaller depth)
-					break;
+					//break;
 				}
 				
-				if ( d > 1 )
+				//	gr: d is now relative to camera-local, so can be > 1
+				float LocalFar = LOCAL_RAY_FAR_DEPTH;
+				float MaxLength = distance( CameraPosLocal, i.vertexlocal ) + LocalFar;
+				if ( d > MaxLength )
 					discard;
 				
+				if ( DEBUG_CAMERA_NORMAL )	rgb = Debug_Normal(RayDirection);
+				
 				//	brighter = nearer
-				d = 1-d;
+				d = 1 - (d/ MaxLength);
 				//return float4(d,d,d,1);
 				return float4(rgb.x,rgb.y,rgb.z,0.5f);
 			}
