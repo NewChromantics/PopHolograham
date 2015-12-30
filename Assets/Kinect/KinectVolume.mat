@@ -152,7 +152,7 @@ Material:
       data:
         first:
           name: SphereX
-        second: 0
+        second: .829999983
       data:
         first:
           name: SphereY
@@ -160,7 +160,7 @@ Material:
       data:
         first:
           name: SphereZ
-        second: 0
+        second: .219999999
       data:
         first:
           name: SphereRad
@@ -192,7 +192,7 @@ Material:
       data:
         first:
           name: CameraFovHorz
-        second: 97
+        second: 109
       data:
         first:
           name: CameraFovVert
@@ -200,15 +200,23 @@ Material:
       data:
         first:
           name: CameraFovTop
-        second: 71
+        second: 83
       data:
         first:
           name: CameraFovBottom
-        second: 282
+        second: 274
       data:
         first:
           name: CloudMinDepth
         second: 26
+      data:
+        first:
+          name: WriteDepth
+        second: .941999972
+      data:
+        first:
+          name: DepthMult
+        second: .939999998
     m_Colors:
       data:
         first:

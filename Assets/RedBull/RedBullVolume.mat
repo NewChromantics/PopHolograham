@@ -168,7 +168,7 @@ Material:
       data:
         first:
           name: CloudVoxelSize
-        second: .0109999999
+        second: .0149999997
       data:
         first:
           name: CloudMaxDepth
@@ -185,6 +185,38 @@ Material:
         first:
           name: DepthRangeBlue
         second: 1000
+      data:
+        first:
+          name: CameraFov
+        second: 360
+      data:
+        first:
+          name: CameraFovHorz
+        second: 360
+      data:
+        first:
+          name: CameraFovVert
+        second: 360
+      data:
+        first:
+          name: CameraFovTop
+        second: 0
+      data:
+        first:
+          name: CameraFovBottom
+        second: 360
+      data:
+        first:
+          name: CloudMinDepth
+        second: 0
+      data:
+        first:
+          name: WriteDepth
+        second: 0
+      data:
+        first:
+          name: DepthMult
+        second: 0
     m_Colors:
       data:
         first:

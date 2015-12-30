@@ -18,6 +18,7 @@
 		CameraFovHorz("CameraFovHorz", Range(0,360) ) = 360
 		CameraFovTop("CameraFovTop", Range(0,360) ) = 0
 		CameraFovBottom("CameraFovBottom", Range(0,360) ) = 360
+		DepthMult("DepthMult", Range(0,1) ) = 0
 	}
 	SubShader
 	{
@@ -33,6 +34,17 @@
 			
 			#include "UnityCG.cginc"
 
+#define DRAW_EQUIRECT	false
+			#define DRAW_NORMAL		false
+			#define DRAW_DOTFORWARD	false
+			#define DRAW_DOTUP		false
+			//#define DRAW_AS_SPHERE	0.3f
+			#define DEBUG_CAMERA_NORMAL	false
+
+#define PIf	3.1415926535897932384626433832795f
+
+			//#define MODIFY_DEPTH
+
 			struct appdata
 			{
 				float4 vertex : POSITION;
@@ -46,14 +58,17 @@
 				float4 vertexlocal : TEXCOORD1;
 			};
 			
-			#define DRAW_EQUIRECT	false
-			#define DRAW_NORMAL		false
-			#define DRAW_DOTFORWARD	false
-			#define DRAW_DOTUP		false
-			//#define DRAW_AS_SPHERE	0.3f
-			#define DEBUG_CAMERA_NORMAL	false
-
-#define PIf	3.1415926535897932384626433832795f
+			//	http://docs.unity3d.com/Manual/SL-ShaderSemantics.html
+			struct TFragOut
+			{
+				float4 rgba : SV_Target;	//	COLOR
+				#if defined(MODIFY_DEPTH)
+				float depth : SV_Depth;	//	DEPTH
+				#endif
+			};
+			
+			
+			
 
 			//	scene
 			sampler2D _MainTex;
@@ -71,6 +86,7 @@
 			float CameraFovHorz;
 			float CameraFovTop;
 			float CameraFovBottom;
+			float DepthMult;
 	
 			float4x4 cameraToWorldMatrix;
 			float4 cameraPos;
@@ -361,9 +377,35 @@
 				return GetColourDistance_TestSphere( VolumePos, CameraPosVolume );
 	
 			}
-
-			float4 frag (v2f i) : COLOR
+			/* unity.cginc
+			// Z buffer to linear depth
+			inline float LinearEyeDepth( float z )
 			{
+				return 1.0 / (_ZBufferParams.z * z + _ZBufferParams.w);
+			}
+			*/
+			
+			// Z buffer to linear depth
+			//	gr: linear depth to z buffer
+			//	http://stackoverflow.com/a/6657284/355753
+			inline float EyeDepthToZBuffer( float linearDepth )
+			{
+				float zFar = _ZBufferParams.w;
+				float zNear= _ZBufferParams.z;
+				/*
+				float A = zFar;
+    			float B = zNear;
+    			return 0.5*(-A*linearDepth + B) / linearDepth + 0.5;
+    			*/
+    			float nonLinearDepth = (zFar + zNear - 2.0 * zNear * zFar / linearDepth) / (zFar - zNear);
+  				nonLinearDepth = (nonLinearDepth + 1.0) / 2.0;
+  				return nonLinearDepth;
+    		}
+		
+			TFragOut frag (v2f i)
+			{
+				TFragOut fragout;
+				
 				//	get ray inside us
 				float4 CameraPos4 = float4( _WorldSpaceCameraPos, 1 );
 				float3 CameraPosLocal = mul( _World2Object, CameraPos4 );
@@ -418,10 +460,23 @@
 				
 				if ( DEBUG_CAMERA_NORMAL )	rgb = Debug_Normal(RayDirection);
 				
+				//	work out depth from camera
+				float3 ViewPos = RayPosition + (RayDirection*d);
+				d = length( CameraPosLocal - ViewPos );
 				//	brighter = nearer
-				d = 1 - (d/ MaxLength);
+				//d = 1 - (d/ MaxLength);
 				//return float4(d,d,d,1);
-				return float4(rgb.x,rgb.y,rgb.z,0.5f);
+				
+				fragout.rgba = float4(rgb.x,rgb.y,rgb.z,0.5f);
+				//fragout.rgba = float4(d,d,d,0.5f);
+				
+				#if defined(MODIFY_DEPTH)
+				//	depth should be clipspace.z / w
+				//	http://forum.unity3d.com/threads/how-to-know-distance-from-camera-in-fragmentshader.369050/
+				//fragout.depth = i.vertex.z / i.vertex.w;
+				fragout.depth = EyeDepthToZBuffer(d);
+				#endif
+				return fragout;
 			}
 			ENDCG
 		}
