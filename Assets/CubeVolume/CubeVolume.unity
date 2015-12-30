@@ -159,7 +159,7 @@ Transform:
   m_LocalScale: {x: .225120544, y: .225120544, z: .225120544}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
 --- !u!1 &692635177
 GameObject:
   m_ObjectHideFlags: 0
@@ -172,7 +172,7 @@ GameObject:
   - 65: {fileID: 692635179}
   - 23: {fileID: 692635178}
   m_Layer: 0
-  m_Name: Volume
+  m_Name: Red bull volume
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -234,7 +234,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 4
 --- !u!1 &881241383
 GameObject:
   m_ObjectHideFlags: 0
@@ -381,3 +381,120 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
+--- !u!1 &1048863266
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 1048863270}
+  - 33: {fileID: 1048863269}
+  - 65: {fileID: 1048863268}
+  - 23: {fileID: 1048863267}
+  - 114: {fileID: 1048863271}
+  m_Layer: 0
+  m_Name: Kinect Volume
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!23 &1048863267
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1048863266}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: b9f7ace8dca1b4e9c95dd1af35f13531, type: 2}
+  m_SubsetIndices: 
+  m_StaticBatchRoot: {fileID: 0}
+  m_UseLightProbes: 1
+  m_ReflectionProbeUsage: 1
+  m_ProbeAnchor: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: .5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!65 &1048863268
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1048863266}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!33 &1048863269
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1048863266}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &1048863270
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1048863266}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: 1.65999997}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 3
+--- !u!114 &1048863271
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1048863266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62e0efa54aad24889b165fd63d562111, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mStreamTextures:
+  - {fileID: 8400000, guid: 0ceb65c868550487480b40ded1d4c3d5, type: 2}
+  - {fileID: 8400000, guid: 9c0d0eceda14c4b8c80e40074e5f0880, type: 2}
+  mAudioStreamIndex: 0
+  mPerformanceTextures: []
+  mLocalisedPerformanceGraph: 1
+  mDebugGuiScale: .225999996
+  mEnableDebugLog: 0
+  mCreateDelay: 1
+  mLooping: 0
+  mPreSeekSecs: 0
+  mSkipPushFrames: 1
+  mSkipPopFrames: 0
+  mAllowGpuColourConversion: 1
+  mAllowCpuColourConversion: 0
+  mPixelClientStorage: 0
+  mAllowSlowCopy: 1
+  mAllowFastCopy: 1
+  mDebugFrameSkipping: 0
+  mPeekBeforeDefferedCopy: 1
+  mDebugNoNewPixelBuffer: 0
+  mDebugRenderThreadCallback: 0
+  mResetInternalTimestamp: 1
+  mDebugBlit: 0
+  mApplyVideoTransform: 1
+  mGenerateMipMaps: 0
+  mPopNearestFrame: 0
+  mStretchToFillTexture: 1
+  mDecoderUseHardwareBuffer: 1
+  filename: kinect:*

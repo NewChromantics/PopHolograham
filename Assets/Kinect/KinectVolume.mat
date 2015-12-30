@@ -6,7 +6,7 @@ Material:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: RayVolume
+  m_Name: KinectVolume
   m_Shader: {fileID: 4800000, guid: bfbce020cc7a3438ca42e6c171853670, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 5
@@ -19,7 +19,7 @@ Material:
         first:
           name: _MainTex
         second:
-          m_Texture: {fileID: 2800000, guid: ae3fc8df722d340b3b4c8e5d8f869be6, type: 3}
+          m_Texture: {fileID: 8400000, guid: 0ceb65c868550487480b40ded1d4c3d5, type: 2}
           m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
       data:
@@ -82,7 +82,7 @@ Material:
         first:
           name: DepthTexture
         second:
-          m_Texture: {fileID: 2800000, guid: ae3fc8df722d340b3b4c8e5d8f869be6, type: 3}
+          m_Texture: {fileID: 8400000, guid: 9c0d0eceda14c4b8c80e40074e5f0880, type: 2}
           m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
       data:
@@ -144,11 +144,11 @@ Material:
       data:
         first:
           name: DepthRangeRed
-        second: 100
+        second: 12
       data:
         first:
           name: DepthRangeGreen
-        second: 255
+        second: 222
       data:
         first:
           name: SphereX
@@ -168,15 +168,15 @@ Material:
       data:
         first:
           name: CloudVoxelSize
-        second: .00300000003
+        second: .0160000008
       data:
         first:
           name: CloudMaxDepth
-        second: 187
+        second: 165
       data:
         first:
           name: DepthToWorld
-        second: .00600000005
+        second: .0189999994
       data:
         first:
           name: DepthRangeCamera
@@ -184,7 +184,31 @@ Material:
       data:
         first:
           name: DepthRangeBlue
-        second: 1000
+        second: 65
+      data:
+        first:
+          name: CameraFov
+        second: 360
+      data:
+        first:
+          name: CameraFovHorz
+        second: 97
+      data:
+        first:
+          name: CameraFovVert
+        second: 164
+      data:
+        first:
+          name: CameraFovTop
+        second: 71
+      data:
+        first:
+          name: CameraFovBottom
+        second: 282
+      data:
+        first:
+          name: CloudMinDepth
+        second: 26
     m_Colors:
       data:
         first:
