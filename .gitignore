@@ -1,6 +1,7 @@
 # Everything in plugins is generated at compile time
-Unity/Assets/Plugins
-Unity/Assets/Plugins.meta
+Assets/Plugins
+Assets/Plugins.meta
+Assets/StreamingAssets
 MakePackage.log
 *.unitypackage
 *.sln

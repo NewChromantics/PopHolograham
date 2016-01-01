@@ -6,7 +6,7 @@ Material:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: KinectVolume
+  m_Name: KinectVideoVolume
   m_Shader: {fileID: 4800000, guid: bfbce020cc7a3438ca42e6c171853670, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 5
@@ -144,11 +144,11 @@ Material:
       data:
         first:
           name: DepthRangeRed
-        second: 12
+        second: 16.34
       data:
         first:
           name: DepthRangeGreen
-        second: 222
+        second: 225.8
       data:
         first:
           name: DepthRangeBlue
@@ -156,15 +156,15 @@ Material:
       data:
         first:
           name: SphereX
-        second: 0.39
+        second: 0.7
       data:
         first:
           name: SphereY
-        second: 0
+        second: -0.03
       data:
         first:
           name: SphereZ
-        second: 0
+        second: 0.31
       data:
         first:
           name: SphereRad
@@ -172,19 +172,19 @@ Material:
       data:
         first:
           name: CloudVoxelSize
-        second: 0.016
+        second: 0.06
       data:
         first:
           name: CloudMaxDepth
-        second: 165
+        second: 50
       data:
         first:
           name: CloudMinDepth
-        second: 26
+        second: -1
       data:
         first:
           name: DepthToWorld
-        second: 0.019
+        second: 0.06
       data:
         first:
           name: CameraFovHorz
@@ -200,11 +200,11 @@ Material:
       data:
         first:
           name: DepthMult
-        second: 0.94
+        second: 1
       data:
         first:
           name: LocalRayNearDepth
-        second: 0
+        second: 0.45
       data:
         first:
           name: LocalRayFarDepth

@@ -11,14 +11,16 @@
 		SphereY("SphereY",Range(-2,2)) = 0
 		SphereZ("SphereZ",Range(-2,2)) = 0
 		SphereRad("SphereRad",Range(0,1)) = 0.1
-		CloudVoxelSize("CloudVoxelSize", Range(0,0.1) ) = 0.01
+		CloudVoxelSize("CloudVoxelSize", Range(0,0.2) ) = 0.01
 		CloudMaxDepth("CloudMaxDepth", Range(0,400) ) = 1		//	in world space
 		CloudMinDepth("CloudMinDepth", Range(-1,400) ) = 0		//	in world space
-		DepthToWorld("DepthToWorld", Range(0,0.1) ) = 0.1		//	actually depth to local
+		DepthToWorld("DepthToWorld", Range(0,0.2) ) = 0.1		//	actually depth to local
 		CameraFovHorz("CameraFovHorz", Range(0,360) ) = 360
 		CameraFovTop("CameraFovTop", Range(0,360) ) = 0
 		CameraFovBottom("CameraFovBottom", Range(0,360) ) = 360
 		DepthMult("DepthMult", Range(0,1) ) = 0
+		LocalRayNearDepth("LocalRayNearDepth", Range(0,1.2) ) = 0	//	sqrt(1+1)
+		LocalRayFarDepth("LocalRayFarDepth", Range(0,1.414) ) = 1.414	//	sqrt(1+1)
 	}
 	SubShader
 	{
@@ -34,14 +36,23 @@
 			
 			#include "UnityCG.cginc"
 
-#define DRAW_EQUIRECT	false
-			#define DRAW_NORMAL		false
-			#define DRAW_DOTFORWARD	false
-			#define DRAW_DOTUP		false
+			#define DRAW_EQUIRECT		0
+			#define DRAW_NORMAL			0
+			#define DRAW_DOTFORWARD		0
+			#define DRAW_DOTUP			0
 			//#define DRAW_AS_SPHERE	0.3f
-			#define DEBUG_CAMERA_NORMAL	false
+			#define DEBUG_CAMERA_NORMAL	0
+			#define DRAW_DEBUG_EQUIRECT	0
+			#define DEBUG_TEXTURES		0
+			#define DEBUG_CAMERA_DIR	0
 
 #define PIf	3.1415926535897932384626433832795f
+
+			#define TEST_GLES_MODE
+			#if defined(TEST_GLES_MODE) || defined(SHADER_API_GLES) || defined(SHADER_API_GLES3)
+				#define TARGET_MOBILE
+			#endif
+			
 
 			//#define MODIFY_DEPTH
 
@@ -51,11 +62,11 @@
 				float2 uv : TEXCOORD0;
 			};
 
-			struct v2f
+			struct TVertOut
 			{
 				float2 uv : TEXCOORD0;
-				float4 vertex : SV_POSITION;
 				float4 vertexlocal : TEXCOORD1;
+				float4 vertex : SV_POSITION;
 			};
 			
 			//	http://docs.unity3d.com/Manual/SL-ShaderSemantics.html
@@ -101,6 +112,8 @@
 			float CloudMaxDepth;
 			float CloudMinDepth;
 			float DepthToWorld;
+			float LocalRayNearDepth;
+			float LocalRayFarDepth;
 
 			float RadToDeg(float Rad)
 			{
@@ -269,9 +282,9 @@
 				return Debug_Normal( GetEquirectView( uv ) );
 			}
 			
-			v2f vert (appdata v)
+			TVertOut vert (appdata v)
 			{
-				v2f o;
+				TVertOut o;
 				o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
 				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 				o.vertexlocal = v.vertex;
@@ -335,24 +348,32 @@
 				
 				//return float4( EquirectUv.x, EquirectUv.y, 0, 1 );
 				float3 CloudColour = tex2D( _MainTex, EquirectUv );	
-				if ( DRAW_EQUIRECT )	CloudColour = float3( EquirectUv.x, EquirectUv.y, 0 );
-				if ( DRAW_NORMAL )		CloudColour = Debug_Normal( CloudColour ).xyz;
-				if ( DRAW_DOTFORWARD )	CloudColour = dot( VolumeView3, float3(0,0,1) );
-				if ( DRAW_DOTUP )		CloudColour = dot( VolumeView3, float3(0,1,0) );
+				#if DRAW_EQUIRECT
+					CloudColour = float3( EquirectUv.x, EquirectUv.y, 0 );
+				#endif
+				#if DRAW_NORMAL
+					CloudColour = Debug_Normal( CloudColour ).xyz;
+				#endif
+				#if DRAW_DOTFORWARD 
+					CloudColour = dot( VolumeView3, float3(0,0,1) );
+				#endif
+				#if DRAW_DOTUP
+					CloudColour = dot( VolumeView3, float3(0,1,0) );
+				#endif
 				//	gr: why do all view vectors point down?
 				//CloudColour.xyz = dot( VolumeView3, float3(0,-1,0) );
 				
+				#if DRAW_DEBUG_EQUIRECT
 				if ( EquirectUv.x < 0 || EquirectUv.x > 1.0f )
 					CloudColour = float3(0,1,1);
 				if ( EquirectUv.y < 0 || EquirectUv.y > 1.0f )
 					CloudColour = float3(1,1,0);
-	
+				#endif
+				
 				float CloudDepth = GetDepth( EquirectUv );
 				
 				
-				if ( CloudDepth < CloudMinDepth )
-					return float4(0,0,0,9999);
-				if ( CloudDepth > CloudMaxDepth )
+				if ( CloudDepth < CloudMinDepth || CloudDepth > CloudMaxDepth )
 					return float4(0,0,0,9999);
 				
 				CloudDepth *= DepthToWorld;
@@ -402,7 +423,7 @@
   				return nonLinearDepth;
     		}
 		
-			TFragOut frag (v2f i)
+			TFragOut frag (TVertOut input)
 			{
 				TFragOut fragout;
 				
@@ -410,10 +431,33 @@
 				float4 CameraPos4 = float4( _WorldSpaceCameraPos, 1 );
 				float3 CameraPosLocal = mul( _World2Object, CameraPos4 );
 				//float3 RayDirection = normalize(WorldSpaceViewDir( i.vertexlocal ));
-				float3 RayDirection = normalize(ObjSpaceViewDir( i.vertexlocal ));
-				float3 RayPosition = i.vertexlocal;
+				float3 RayDirection = normalize(ObjSpaceViewDir( input.vertexlocal ));
+				float3 RayPosition = input.vertexlocal;
 				//	we want ray AWAY from the camera
 				RayDirection *= -1;
+				
+				
+				#if DEBUG_TEXTURES
+				{
+					if ( input.uv.y < 0.5 )
+					{
+						fragout.rgba = tex2D( _MainTex, float2( input.uv.x, Range( 0, 0.5, input.uv.y ) ) );
+					}
+					else
+					{
+						fragout.rgba = tex2D( DepthTexture, float2( input.uv.x, Range( 0.5, 1.0, input.uv.y ) ) );
+					}
+					return fragout;
+				}
+				#endif
+		
+
+				#if DEBUG_CAMERA_DIR
+				{
+					fragout.rgba = Debug_Normal( RayDirection );
+					return fragout;
+				}
+				#endif
 			
 			//#error 1) Equirect is wrapping
 			//#error 2) distance returned in GetColourDistance is closer, the further away it is (break proves this)
@@ -422,18 +466,17 @@
 				float3 rgb = float3(1,0,0);;
 				//	ray march
 				
-				#define LOCAL_RAY_FAR_DEPTH	1.4f	//	sqrt(1+1)
-				#define FORWARD_MARCHES 80
-				#define DEBUG_MAX_LOOP FORWARD_MARCHES
 				//	start BEHIND for when we're INSIDE the bounds (gr: this may only apply to the debug sphere)
-				#if defined(DRAW_AS_SPHERE)
-				#define BACKWARD_MARCHES	40
+				#if defined(TARGET_MOBILE)
+					#define FORWARD_MARCHES		10
+					#define BACKWARD_MARCHES	4
 				#else
-				#define BACKWARD_MARCHES	40
+					#define FORWARD_MARCHES		80
+					#define BACKWARD_MARCHES	40
 				#endif
-				for ( int i=-BACKWARD_MARCHES;	i<min(DEBUG_MAX_LOOP,FORWARD_MARCHES);	i++ )
+				for ( int i=-BACKWARD_MARCHES;	i<FORWARD_MARCHES;	i++ )
 				{
-					float RayLocalDepth = (i/(float)FORWARD_MARCHES) * LOCAL_RAY_FAR_DEPTH;
+					float RayLocalDepth = lerp( LocalRayNearDepth, LocalRayFarDepth, (i/(float)FORWARD_MARCHES) );
 					float3 Pos = RayPosition + (RayDirection*RayLocalDepth);
 					
 					float4 RayColourDist = GetColourDistance( Pos, CameraPosLocal );
@@ -447,31 +490,34 @@
 					//d = RayLocalDepth;
 					rgb = RayColourDist.xyz;
 					
-					//	return first result. should be closest
-					//	gr: ^^^ true, but susbsequent ones are "nearer" (have smaller depth)
-					//break;
+					//	gr: don't leave this in! testing speed
+					#if defined(TARGET_MOBILE)
+						break;
+					#endif
 				}
 				
 				//	gr: d is now relative to camera-local, so can be > 1
-				float LocalFar = LOCAL_RAY_FAR_DEPTH;
-				float MaxLength = distance( CameraPosLocal, i.vertexlocal ) + LocalFar;
+				float LocalFar = LocalRayFarDepth;
+				float MaxLength = distance( CameraPosLocal.xyz, input.vertexlocal ) + LocalFar;
 				if ( d > MaxLength )
 					discard;
 				
-				if ( DEBUG_CAMERA_NORMAL )	rgb = Debug_Normal(RayDirection);
+				#if DEBUG_CAMERA_NORMAL
+					rgb = Debug_Normal(RayDirection);
+				#endif
 				
+				fragout.rgba = float4(rgb.x,rgb.y,rgb.z,0.5f);
+				//fragout.rgba = float4(d,d,d,0.5f);
+				
+				#if defined(MODIFY_DEPTH)
 				//	work out depth from camera
 				float3 ViewPos = RayPosition + (RayDirection*d);
 				d = length( CameraPosLocal - ViewPos );
 				//	brighter = nearer
 				//d = 1 - (d/ MaxLength);
 				//return float4(d,d,d,1);
-				
-				fragout.rgba = float4(rgb.x,rgb.y,rgb.z,0.5f);
-				//fragout.rgba = float4(d,d,d,0.5f);
-				
-				#if defined(MODIFY_DEPTH)
-				//	depth should be clipspace.z / w
+
+								//	depth should be clipspace.z / w
 				//	http://forum.unity3d.com/threads/how-to-know-distance-from-camera-in-fragmentshader.369050/
 				//fragout.depth = i.vertex.z / i.vertex.w;
 				fragout.depth = EyeDepthToZBuffer(d);

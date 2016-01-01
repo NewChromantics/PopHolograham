@@ -6,11 +6,11 @@ Material:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: KinectVolume
-  m_Shader: {fileID: 4800000, guid: bfbce020cc7a3438ca42e6c171853670, type: 3}
+  m_Name: KinectColour
+  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
   m_ShaderKeywords: 
   m_LightmapFlags: 5
-  m_CustomRenderQueue: 2000
+  m_CustomRenderQueue: -1
   stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
@@ -78,20 +78,6 @@ Material:
           m_Texture: {fileID: 0}
           m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
-      data:
-        first:
-          name: DepthTexture
-        second:
-          m_Texture: {fileID: 8400000, guid: 9c0d0eceda14c4b8c80e40074e5f0880, type: 2}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-      data:
-        first:
-          name: ColourTexture
-        second:
-          m_Texture: {fileID: 2800000, guid: feb45e984a1514c9f9e4e3cf28f32c0d, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
     m_Floats:
       data:
         first:
@@ -104,11 +90,11 @@ Material:
       data:
         first:
           name: _Cutoff
-        second: 0.5
+        second: .5
       data:
         first:
           name: _Parallax
-        second: 0.02
+        second: .0199999996
       data:
         first:
           name: _ZWrite
@@ -116,7 +102,7 @@ Material:
       data:
         first:
           name: _Glossiness
-        second: 0.5
+        second: .5
       data:
         first:
           name: _BumpScale
@@ -141,90 +127,6 @@ Material:
         first:
           name: _Metallic
         second: 0
-      data:
-        first:
-          name: DepthRangeRed
-        second: 12
-      data:
-        first:
-          name: DepthRangeGreen
-        second: 222
-      data:
-        first:
-          name: DepthRangeBlue
-        second: 1000
-      data:
-        first:
-          name: SphereX
-        second: 0.39
-      data:
-        first:
-          name: SphereY
-        second: 0
-      data:
-        first:
-          name: SphereZ
-        second: 0
-      data:
-        first:
-          name: SphereRad
-        second: 0.34
-      data:
-        first:
-          name: CloudVoxelSize
-        second: 0.016
-      data:
-        first:
-          name: CloudMaxDepth
-        second: 165
-      data:
-        first:
-          name: CloudMinDepth
-        second: 26
-      data:
-        first:
-          name: DepthToWorld
-        second: 0.019
-      data:
-        first:
-          name: CameraFovHorz
-        second: 109
-      data:
-        first:
-          name: CameraFovTop
-        second: 83
-      data:
-        first:
-          name: CameraFovBottom
-        second: 274
-      data:
-        first:
-          name: DepthMult
-        second: 0.94
-      data:
-        first:
-          name: LocalRayNearDepth
-        second: 0
-      data:
-        first:
-          name: LocalRayFarDepth
-        second: 1.414
-      data:
-        first:
-          name: DepthRangeCamera
-        second: 2
-      data:
-        first:
-          name: CameraFov
-        second: 360
-      data:
-        first:
-          name: CameraFovVert
-        second: 164
-      data:
-        first:
-          name: WriteDepth
-        second: 0.942
     m_Colors:
       data:
         first:
